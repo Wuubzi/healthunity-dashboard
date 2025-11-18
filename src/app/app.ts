@@ -1,12 +1,14 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-
+import { Sidebar } from './Components/Sidebar/sidebar';
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  template: ` <app-sidebar>
+    <router-outlet></router-outlet>
+  </app-sidebar>`,
+  standalone: true,
+  imports: [RouterOutlet, Sidebar],
 })
 export class App {
-  protected readonly title = signal('healthunity-dashboard');
+  protected readonly title = signal('HealthUnity');
 }

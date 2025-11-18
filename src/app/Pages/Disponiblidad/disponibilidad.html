@@ -1,0 +1,287 @@
+<!-- Contenedor principal con padding adecuado -->
+<div class="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+  <!-- Loading Overlay -->
+  @if (loading()) {
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 flex items-center gap-4">
+        <fa-icon [icon]="faSpinner" class="text-blue-600 text-3xl animate-spin"></fa-icon>
+        <span class="text-lg font-semibold">Cargando horarios...</span>
+      </div>
+    </div>
+  }
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+    <div class="bg-white rounded-xl shadow-md p-6">
+      <div class="flex items-center gap-4">
+        <div class="bg-blue-100 p-4 rounded-lg flex-shrink-0">
+          <fa-icon [icon]="faClock" class="text-blue-600 text-2xl"></fa-icon>
+        </div>
+        <div class="min-w-0">
+          <p class="text-sm text-gray-600 font-medium">Horas semanales</p>
+          @if (statsLoading()) {
+            <div class="h-9 bg-gray-200 animate-pulse rounded mt-1"></div>
+          } @else {
+            <p class="text-3xl font-bold text-gray-800">{{getTotalHoursPerWeek()}}h</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-md p-6">
+      <div class="flex items-center gap-4">
+        <div class="bg-green-100 p-4 rounded-lg flex-shrink-0">
+          <fa-icon [icon]="faCalendar" class="text-green-600 text-2xl"></fa-icon>
+        </div>
+        <div class="min-w-0">
+          <p class="text-sm text-gray-600 font-medium">Días activos</p>
+          @if (statsLoading()) {
+            <div class="h-9 bg-gray-200 animate-pulse rounded mt-1"></div>
+          } @else {
+            <p class="text-3xl font-bold text-gray-800">{{getActiveDaysCount()}}</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-md p-6">
+      <div class="flex items-center gap-4">
+        <div class="bg-purple-100 p-4 rounded-lg flex-shrink-0">
+          <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <p class="text-sm text-gray-600 font-medium">Citas/semana (aprox)</p>
+          @if (statsLoading()) {
+            <div class="h-9 bg-gray-200 animate-pulse rounded mt-1"></div>
+          } @else {
+            <p class="text-3xl font-bold text-gray-800">{{getTotalAppointmentsPerWeek()}}</p>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Configuration Settings -->
+  <div class="bg-white rounded-xl shadow-md p-4 md:p-6 mb-6">
+    <h2 class="text-xl font-bold text-gray-800 mb-6">Configuración de Citas</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+      <!-- Appointment Duration -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Duración de cada cita (minutos)
+        </label>
+        <select 
+          [ngModel]="appointmentDuration()"
+          (ngModelChange)="appointmentDuration.set($event)"
+          [disabled]="loading()"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100">
+          <option [value]="15">15 minutos</option>
+          <option [value]="20">20 minutos</option>
+          <option [value]="30">30 minutos</option>
+          <option [value]="45">45 minutos</option>
+          <option [value]="60">60 minutos</option>
+        </select>
+      </div>
+
+      <!-- Break Time -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Tiempo de descanso entre citas (minutos)
+        </label>
+        <select 
+          [ngModel]="breakTime()"
+          (ngModelChange)="breakTime.set($event)"
+          [disabled]="loading()"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100">
+          <option [value]="0">Sin descanso</option>
+          <option [value]="5">5 minutos</option>
+          <option [value]="10">10 minutos</option>
+          <option [value]="15">15 minutos</option>
+          <option [value]="20">20 minutos</option>
+          <option [value]="30">30 minutos</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weekly Schedule -->
+  <div class="space-y-4">
+    @for (daySchedule of schedule(); track daySchedule.day) {
+      <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300"
+           [class.opacity-60]="!daySchedule.enabled">
+        <!-- Day Header -->
+        <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 md:p-6">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-4 w-full sm:w-auto">
+              <!-- Toggle Switch -->
+              <button
+                (click)="toggleDay(daySchedule)"
+                [disabled]="loading()"
+                [class.bg-blue-500]="daySchedule.enabled"
+                [class.bg-gray-300]="!daySchedule.enabled"
+                class="relative inline-flex flex-shrink-0 h-8 w-14 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                type="button"
+                role="switch"
+                [attr.aria-checked]="daySchedule.enabled">
+                <span 
+                  [class.translate-x-6]="daySchedule.enabled"
+                  [class.translate-x-0]="!daySchedule.enabled"
+                  class="pointer-events-none inline-block h-7 w-7 rounded-full bg-white shadow-lg transform ring-0 transition ease-in-out duration-200">
+                </span>
+              </button>
+              
+              <div class="flex-1 min-w-0">
+                <h3 class="text-lg md:text-xl font-bold text-gray-800">{{daySchedule.dayName}}</h3>
+                @if (daySchedule.enabled) {
+                  <p class="text-sm text-gray-600">
+                    {{getAppointmentsPerDay(daySchedule)}} citas disponibles
+                  </p>
+                } @else {
+                  <p class="text-sm text-gray-500">Día no disponible</p>
+                }
+              </div>
+            </div>
+
+            @if (daySchedule.enabled && daySchedule.timeSlots.length > 0) {
+              <button
+                (click)="copyScheduleToAll(daySchedule)"
+                [disabled]="loading()"
+                class="w-full sm:w-auto px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
+                Copiar a otros días
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Time Slots -->
+        @if (daySchedule.enabled) {
+          <div class="p-4 md:p-6 space-y-4">
+            @if (daySchedule.timeSlots.length === 0) {
+              <div class="text-center py-8 bg-gray-50 rounded-lg">
+                <p class="text-gray-600 mb-4">No hay horarios configurados para este día</p>
+                <button
+                  (click)="addTimeSlot(daySchedule)"
+                  [disabled]="loading()"
+                  class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  <fa-icon [icon]="faPlus" class="mr-2"></fa-icon>
+                  Agregar horario de mañana
+                </button>
+              </div>
+            } @else {
+              @for (slot of daySchedule.timeSlots; track slot.id || slot.idHorarioDoctor; let idx = $index) {
+                <div class="relative">
+                  <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                    <span class="font-semibold text-gray-700 sm:min-w-[80px]">
+                      @if (idx === 0) {
+                        <span class="inline-flex items-center gap-2">
+                          <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
+                          </svg>
+                          Mañana
+                        </span>
+                      } @else {
+                        <span class="inline-flex items-center gap-2">
+                          <svg class="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                          </svg>
+                          Tarde
+                        </span>
+                      }
+                    </span>
+
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+                      <div class="flex-1 min-w-0">
+                        <label class="block text-xs text-gray-600 mb-1">Hora inicio</label>
+                        <input
+                          type="time"
+                          [value]="slot.startTime"
+                          (input)="updateTimeSlot(daySchedule, slot.id || slot.idHorarioDoctor?.toString() || null, 'startTime', $any($event.target).value)"
+                          [disabled]="loading()"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100">
+                      </div>
+
+                      <span class="text-gray-400 self-center hidden sm:block">→</span>
+
+                      <div class="flex-1 min-w-0">
+                        <label class="block text-xs text-gray-600 mb-1">Hora fin</label>
+                        <input
+                          type="time"
+                          [value]="slot.endTime"
+                          (input)="updateTimeSlot(daySchedule, slot.id || slot.idHorarioDoctor?.toString() || null, 'endTime', $any($event.target).value)"
+                          [disabled]="loading()"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100">
+                      </div>
+                    </div>
+
+                    <!-- Duration Display -->
+                    <div class="bg-blue-50 px-4 py-2 rounded-lg min-w-[100px] text-center">
+                      <p class="text-xs text-gray-600">Duración</p>
+                      <p class="font-bold text-blue-600">
+                        {{getSlotDuration(slot.startTime, slot.endTime)}}h
+                      </p>
+                    </div>
+
+                    <button
+                      (click)="removeTimeSlot(daySchedule, slot.id || slot.idHorarioDoctor?.toString() || null)"
+                      [disabled]="loading()"
+                      class="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors self-center disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Eliminar horario">
+                      <fa-icon [icon]="faTrash"></fa-icon>
+                    </button>
+                  </div>
+                  
+                  @if (!validateTimeSlot(slot)) {
+                    <div class="mt-1 text-xs text-red-600">
+                      La hora de inicio debe ser menor que la hora de fin
+                    </div>
+                  }
+                </div>
+              }
+
+              @if (canAddMoreTimeSlots(daySchedule)) {
+                <button
+                  (click)="addTimeSlot(daySchedule)"
+                  [disabled]="loading()"
+                  class="w-full py-3 border-2 border-dashed border-gray-300 hover:border-blue-500 text-gray-600 hover:text-blue-600 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  <fa-icon [icon]="faPlus" class="mr-2"></fa-icon>
+                  Agregar horario de tarde
+                </button>
+              } @else {
+                <div class="w-full py-3 border-2 border-dashed border-gray-200 text-gray-400 rounded-lg font-medium text-center">
+                  <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  Máximo 2 horarios por día (mañana y tarde)
+                </div>
+              }
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Save Button -->
+  <div class="mt-8 flex flex-col sm:flex-row justify-end gap-4">
+    <button
+      [disabled]="loading() || saving()"
+      class="w-full sm:w-auto px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+      Cancelar
+    </button>
+    <button
+      (click)="saveSchedule()"
+      [disabled]="loading() || saving()"
+      class="w-full sm:w-auto px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+      @if (saving()) {
+        <fa-icon [icon]="faSpinner" class="animate-spin"></fa-icon>
+        <span>Guardando...</span>
+      } @else {
+        <fa-icon [icon]="faSave"></fa-icon>
+        <span>Guardar Horario</span>
+      }
+    </button>
+  </div>
+</div>

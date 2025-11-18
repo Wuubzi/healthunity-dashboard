@@ -1,0 +1,253 @@
+<div class="p-8 bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">Mis Citas</h1>
+    <p class="text-gray-600">Gestiona y visualiza todas tus citas programadas</p>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+    <div class="flex flex-col md:flex-row gap-4">
+      <!-- Search Bar -->
+      <div class="flex-1">
+        <div class="relative">
+          <fa-icon [icon]="faSearch" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></fa-icon>
+          <input 
+            type="text"
+            placeholder="Buscar por paciente, tipo de cita..."
+            class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchChange($event)">
+        </div>
+      </div>
+
+      <!-- Filter Buttons -->
+      <div class="flex gap-2 flex-wrap">
+        @for (filter of filterOptions(); track filter.value) {
+          <button
+            (click)="onFilterChange(filter.value)"
+            [class.bg-blue-500]="selectedFilter() === filter.value"
+            [class.text-white]="selectedFilter() === filter.value"
+            [class.bg-gray-100]="selectedFilter() !== filter.value"
+            [class.text-gray-700]="selectedFilter() !== filter.value"
+            class="px-4 py-2 rounded-lg font-medium transition-colors hover:shadow-md">
+            {{filter.label}}
+            <span class="ml-2 px-2 py-0.5 rounded-full text-xs"
+                  [class.bg-blue-600]="selectedFilter() === filter.value"
+                  [class.bg-gray-200]="selectedFilter() !== filter.value">
+              {{filter.count}}
+            </span>
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="bg-white rounded-xl shadow-md p-12">
+      <div class="flex flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mb-4"></div>
+        <p class="text-gray-600">Cargando citas...</p>
+      </div>
+    </div>
+  } @else {
+    <!-- Table -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+      @if (getFilteredAppointments().length === 0) {
+        <div class="p-12 text-center">
+          <div class="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <fa-icon [icon]="faCalendar" class="text-gray-400 text-3xl"></fa-icon>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">No se encontraron citas</h3>
+          <p class="text-gray-600">Intenta ajustar los filtros o la búsqueda</p>
+        </div>
+      } @else {
+        <!-- Table Header -->
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b-2 border-gray-200">
+              <tr>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Paciente
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Contacto
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Fecha & Hora
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Tipo
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Estado
+                </th>
+                <th class="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              @for (cita of getPaginatedAppointments(); track cita.idCita) {
+                <tr class="hover:bg-gray-50 transition-colors">
+                  <!-- Patient -->
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                      <img 
+                        [src]="cita.imagenPaciente" 
+                        [alt]="cita.nombrePaciente"
+                        class="w-10 h-10 rounded-full ring-2 ring-blue-100 object-cover"
+                        onerror="this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(this.alt) + '&background=3B82F6&color=fff'">
+                      <div>
+                        <p class="font-semibold text-gray-800">{{cita.nombrePaciente}}</p>
+                        <p class="text-sm text-gray-500">{{cita.edad}} años</p>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Contact -->
+                  <td class="px-6 py-4">
+                    <div class="text-sm">
+                      <div class="flex items-center gap-2 text-gray-600 mb-1">
+                        <fa-icon [icon]="faPhone" class="text-xs text-gray-400"></fa-icon>
+                        <span>{{cita.contacto}}</span>
+                      </div>
+                      <div class="flex items-center gap-2 text-gray-600">
+                        <fa-icon [icon]="faEnvelope" class="text-xs text-gray-400"></fa-icon>
+                        <span class="truncate max-w-xs">{{cita.email}}</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Date & Time -->
+                  <td class="px-6 py-4">
+                    <div class="text-sm">
+                      <div class="flex items-center gap-2 font-semibold text-gray-800 mb-1">
+                        <fa-icon [icon]="faCalendar" class="text-blue-600"></fa-icon>
+                        <span>{{formatDate(cita.fecha)}}</span>
+                      </div>
+                      <div class="flex items-center gap-2 text-gray-600">
+                        <fa-icon [icon]="faClock" class="text-blue-600"></fa-icon>
+                        <span>{{formatTime(cita.hora)}}</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Type -->
+                  <td class="px-6 py-4">
+                    <span class="text-sm font-medium text-gray-800">{{cita.tipo}}</span>
+                  </td>
+
+                  <!-- Status -->
+                  <td class="px-6 py-4">
+                    <span [class]="getStatusColor(cita.estado) + ' px-3 py-1 rounded-full text-xs font-semibold inline-block'">
+                      {{getStatusLabel(cita.estado)}}
+                    </span>
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="px-6 py-4">
+                    <div class="flex justify-center gap-2">
+                      <!-- Botón Cancelar -->
+                      @if (canCancelCita(cita)) {
+                        <button 
+                          (click)="cancelarCita(cita.idCita, $event)"
+                          [disabled]="isProcessing(cita.idCita)"
+                          class="p-2 hover:bg-red-50 rounded-lg transition-colors group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed relative"
+                          title="Cancelar Cita">
+                          @if (isProcessing(cita.idCita) && actionType() === 'cancelar') {
+                            <fa-icon [icon]="faSpinner" class="text-red-600 animate-spin"></fa-icon>
+                          } @else {
+                            <fa-icon [icon]="faCancel" class="text-gray-600 group-hover:text-red-600"></fa-icon>
+                          }
+                        </button>
+                      } @else {
+                        <div class="p-2 opacity-30 cursor-not-allowed" title="No se puede cancelar">
+                          <fa-icon [icon]="faCancel" class="text-gray-400"></fa-icon>
+                        </div>
+                      }
+
+                      <!-- Botón Completar -->
+                      @if (canCompleteCita(cita)) {
+                        <button 
+                          (click)="completarCita(cita.idCita, $event)"
+                          [disabled]="isProcessing(cita.idCita)"
+                          class="p-2 hover:bg-green-50 rounded-lg transition-colors group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed relative"
+                          title="Completar Cita">
+                          @if (isProcessing(cita.idCita) && actionType() === 'completar') {
+                            <fa-icon [icon]="faSpinner" class="text-green-600 animate-spin"></fa-icon>
+                          } @else {
+                            <fa-icon [icon]="faCheck" class="text-gray-600 group-hover:text-green-600"></fa-icon>
+                          }
+                        </button>
+                      } @else {
+                        <div class="p-2 opacity-30 cursor-not-allowed" title="No se puede completar">
+                          <fa-icon [icon]="faCheck" class="text-gray-400"></fa-icon>
+                        </div>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+          <div class="flex items-center justify-between">
+            <!-- Results Info -->
+            <div class="text-sm text-gray-600">
+              Mostrando <span class="font-semibold text-gray-800">{{getStartIndex()}}</span> a 
+              <span class="font-semibold text-gray-800">{{getEndIndex()}}</span> de 
+              <span class="font-semibold text-gray-800">{{totalElements()}}</span> resultados
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="flex items-center gap-2">
+              <!-- Previous Button -->
+              <button 
+                (click)="previousPage()"
+                [disabled]="currentPage() === 0"
+                [class.opacity-50]="currentPage() === 0"
+                [class.cursor-not-allowed]="currentPage() === 0"
+                class="px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition-colors disabled:hover:bg-white">
+                <fa-icon [icon]="faChevronLeft" class="text-gray-600"></fa-icon>
+              </button>
+
+              <!-- Page Numbers -->
+              @for (page of getPageNumbers(); track $index) {
+                @if (page === -1) {
+                  <span class="px-3 py-2 text-gray-400">...</span>
+                } @else {
+                  <button
+                    (click)="goToPage(page)"
+                    [class.bg-blue-500]="currentPage() === page"
+                    [class.text-white]="currentPage() === page"
+                    [class.border-blue-500]="currentPage() === page"
+                    [class.bg-white]="currentPage() !== page"
+                    [class.text-gray-700]="currentPage() !== page"
+                    [class.border-gray-300]="currentPage() !== page"
+                    class="px-4 py-2 rounded-lg border hover:bg-gray-100 transition-colors font-medium">
+                    {{page + 1}}
+                  </button>
+                }
+              }
+
+              <!-- Next Button -->
+              <button 
+                (click)="nextPage()"
+                [disabled]="currentPage() >= getTotalPages() - 1"
+                [class.opacity-50]="currentPage() >= getTotalPages() - 1"
+                [class.cursor-not-allowed]="currentPage() >= getTotalPages() - 1"
+                class="px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition-colors disabled:hover:bg-white">
+                <fa-icon [icon]="faChevronRight" class="text-gray-600"></fa-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

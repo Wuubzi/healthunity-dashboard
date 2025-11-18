@@ -1,0 +1,121 @@
+`<aside 
+  [class.w-64]="!isCollapsed()"
+  [class.w-20]="isCollapsed()"
+  class="bg-white text-gray-800 h-screen fixed left-0 top-0 transition-all duration-300 ease-in-out shadow-xl z-50 border-r border-gray-200">
+  
+  <!-- Header -->
+  <div class="flex items-center justify-between p-5 border-b border-gray-200">
+    <div class="flex items-center space-x-3" [class.justify-center]="isCollapsed()">
+      @if (!isCollapsed()) {
+        <span class="font-bold text-xl text-gray-800">HealthUnity</span>
+      }
+    </div>
+    
+    <button 
+      (click)="toggleSidebar()"
+      class="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        @if (isCollapsed()) {
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+        } @else {
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+        }
+      </svg>
+    </button>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="mt-4 px-3 overflow-y-auto h-[calc(100vh-180px)]">
+    @for (item of menuItems; track item.route) {
+      <a 
+        [routerLink]="item.route"
+        routerLinkActive="!bg-blue-500 !text-white shadow-md"
+        [routerLinkActiveOptions]="{exact: item.route === '/'}"
+        class="flex items-center space-x-3 px-4 py-3.5 mb-1 rounded-xl hover:bg-blue-50 transition-all duration-200 group cursor-pointer text-gray-700"
+        [class.justify-center]="isCollapsed()">
+        
+        <div class="relative flex-shrink-0">
+          @if (item.icon) {
+            <fa-icon 
+              [icon]="item.icon" 
+              class="text-xl transition-colors">
+            </fa-icon>
+          }
+          
+          @if (item.badge && isCollapsed()) {
+            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold text-[10px] shadow-lg">
+              {{item.badge}}
+            </span>
+          }
+        </div>
+        
+        @if (!isCollapsed()) {
+          <span class="font-medium flex-1">
+            {{item.label}}
+          </span>
+          
+          @if (item.badge) {
+            <span class="bg-red-500 text-white text-xs px-2.5 py-1 rounded-full font-semibold shadow-sm">
+              {{item.badge}}
+            </span>
+          }
+        }
+      </a>
+    }
+  </nav>
+
+  <!-- User Profile -->
+  <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gray-50">
+    @if (isLoadingProfile()) {
+      <div class="flex items-center justify-center">
+        <div class="animate-pulse flex space-x-3 w-full" [class.justify-center]="isCollapsed()">
+          <div class="w-11 h-11 bg-gray-300 rounded-full"></div>
+          @if (!isCollapsed()) {
+            <div class="flex-1 space-y-2">
+              <div class="h-4 bg-gray-300 rounded w-3/4"></div>
+              <div class="h-3 bg-gray-300 rounded w-1/2"></div>
+            </div>
+          }
+        </div>
+      </div>
+    } @else if (doctorProfile()) {
+      <div class="flex items-center space-x-3" [class.justify-center]="isCollapsed()">
+        @if (doctorProfile()!.doctor_image) {
+          <img 
+            [src]="doctorProfile()!.doctor_image" 
+            [alt]="doctorProfile()!.nombre"
+            class="w-11 h-11 rounded-full ring-2 ring-blue-500 shadow-md object-cover">
+        } @else {
+          <div class="w-11 h-11 rounded-full ring-2 ring-blue-500 shadow-md bg-blue-500 flex items-center justify-center text-white font-semibold">
+            {{getInitials(doctorProfile()!.nombre)}}
+          </div>
+        }
+        
+        @if (!isCollapsed()) {
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-sm text-gray-800 truncate">{{doctorProfile()!.nombre}}</p>
+            <p class="text-xs text-gray-500 truncate">{{doctorProfile()!.especialidad}}</p>
+          </div>
+          
+          <button (click)="logout()" class="p-2 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer" title="Cerrar sesión">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="flex items-center justify-center text-gray-500 text-sm">
+        @if (!isCollapsed()) {
+          <span>No se pudo cargar el perfil</span>
+        }
+      </div>   
+         
+    }
+  </div>
+</aside>
+
+<!-- Main Content Wrapper -->
+<div [class.ml-64]="!isCollapsed()" [class.ml-20]="isCollapsed()" class="transition-all duration-300 min-h-screen bg-gray-50">
+  <ng-content></ng-content>
+</div>`
